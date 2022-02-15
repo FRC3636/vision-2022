@@ -20,7 +20,7 @@ const VERTICAL_RESOLUTION: i32 = 720;
 
 fn calc_dist(y_height: i32) -> f32 {
 	let height = GOAL_HEIGHT - CAMERA_HEIGHT;
-	let angle : f32 = (CAMERA_ANGLE + ((y_height - VERTICAL_RESOLUTION / 2) * VERTICAL_FOV) / (VERTICAL_RESOLUTION as f32)) as f32;
+	let angle = (CAMERA_ANGLE + ((y_height - VERTICAL_RESOLUTION / 2) * VERTICAL_FOV) / (VERTICAL_RESOLUTION as f32));
 
 	height * angle.tan()
 }
