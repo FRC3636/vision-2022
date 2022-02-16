@@ -1,57 +1,85 @@
-use std::os::raw::c_double;
 use opencv::{
-	highgui,
-	prelude::*,
-	videoio,
+    core::{in_range, Size_, Vector, BORDER_DEFAULT},
+    highgui, imgproc,
+    prelude::*,
+    videoio,
 };
 
-const GOAL_HEIGHT: i32 = 105;
-
+const GOAL_HEIGHT: f32 = 105.0;
 
 // Camera params
-const CAMERA_HEIGHT: i32 = 24;
-const CAMERA_ANGLE: i32 = 45;
+const CAMERA_HEIGHT: f32 = 24.0;
+const CAMERA_ANGLE: f32 = 45.0;
 
-const VERTICAL_FOV: i32 = 41;
-const HORIZONTAL_FOV: i32 = 53;
+const VERTICAL_FOV: f32 = 41.0;
+const HORIZONTAL_FOV: f32 = 53.0;
 
-const HORIZONTAL_RESOLUTION: i32 = 1280;
-const VERTICAL_RESOLUTION: i32 = 720;
+const HORIZONTAL_RESOLUTION: u32 = 1280;
+const VERTICAL_RESOLUTION: u32 = 720;
 
-fn calc_dist(y_height: i32) -> f32 {
-	let height = GOAL_HEIGHT - CAMERA_HEIGHT;
-	let angle = (CAMERA_ANGLE + ((y_height - VERTICAL_RESOLUTION / 2) * VERTICAL_FOV) / (VERTICAL_RESOLUTION as f32));
+fn calc_dist(pix_y: u32) -> f32 {
+    const HEIGHT: f32 = GOAL_HEIGHT - CAMERA_HEIGHT;
 
-	height * angle.tan()
+    let angle = (pix_y as f32 / VERTICAL_RESOLUTION as f32) * VERTICAL_FOV - (VERTICAL_FOV / 2.0);
+
+    HEIGHT / angle.tan()
 }
 
-
-
-fn green_filter(frame: Mat) -> Mat {
-	frame
+fn green_filter(frame: &mut Mat) -> opencv::Result<()> {
+    unsafe {
+        imgproc::cvt_color(
+            // AFAICT there's no safe way to do this
+            &*(frame as *const _),
+            &mut *(frame as *mut _),
+            imgproc::COLOR_BGR2HSV,
+            0,
+        )?;
+        imgproc::gaussian_blur(
+            &*(frame as *const _),
+            &mut *(frame as *mut _),
+            Size_ {
+                width: 5,
+                height: 5,
+            },
+            0.0,
+            0.0,
+            BORDER_DEFAULT,
+        )?;
+        in_range(
+            &*(frame as *const _),
+            &Vector::<u8>::from(vec![60, 25, 100]),
+            &Vector::<u8>::from(vec![90, 255, 255]),
+            &mut *(frame as *mut _),
+        )?;
+    }
+    Ok(())
 }
 
 fn main() -> opencv::Result<()> {
-	highgui::named_window("video_capture", highgui::WINDOW_AUTOSIZE)?;
+    highgui::named_window("video_capture", highgui::WINDOW_AUTOSIZE)?;
 
-	#[cfg(ocvrs_opencv_branch_32)]
-	let mut cam = videoio::VideoCapture::new_default()?; // 0 is the default camera
+    #[cfg(ocvrs_opencv_branch_32)]
+    let mut cam = videoio::VideoCapture::new_default()?; // 0 is the default camera
 
-	#[cfg(not(ocvrs_opencv_branch_32))]
-	let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)?; // 0 is the default camera
+    #[cfg(not(ocvrs_opencv_branch_32))]
+    let mut cam = videoio::VideoCapture::new(0, videoio::CAP_ANY)?; // 0 is the default camera
 
-	assert!(videoio::VideoCapture::is_opened(&cam)?, "unable to open default camera");
+    assert!(
+        videoio::VideoCapture::is_opened(&cam)?,
+        "unable to open default camera"
+    );
 
-	loop {
-		let mut frame = Mat::default();
-		cam.read(&mut frame)?;
-		if frame.size()?.width > 0 {
-			highgui::imshow("video_capture", &mut green_filter(frame))?;
-		}
-		let key = highgui::wait_key(10)?;
-		if key > 0 && key != 255 {
-			break;
-		}
-	}
-	Ok(())
+    loop {
+        let mut frame = Mat::default();
+        cam.read(&mut frame)?;
+        if frame.size()?.width > 0 {
+            green_filter(&mut frame);
+            highgui::imshow("video_capture", &frame)?;
+        }
+        let key = highgui::wait_key(10)?;
+        if key > 0 && key != 255 {
+            break;
+        }
+    }
+    Ok(())
 }
