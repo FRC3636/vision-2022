@@ -28,11 +28,13 @@ def calc_dist(pix_y: int) -> float:
     return HEIGHT / tan(angle)
 
 
-def green_filter(frame) -> None:
-    newframe = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    newframe = cv2.GaussianBlur(newframe, (5, 5), 0)
-    newframe = cv2.inRange(newframe, (60, 25, 100), (90, 255, 255), newframe)
-    return newframe
+def green_filter(img):
+    filtered_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    filtered_img = cv2.GaussianBlur(filtered_img, (5, 5), 0)
+    filtered_img = cv2.inRange(filtered_img, (60, 25, 100), (90, 255, 255), filtered_img)
+    return filtered_img
+
+
 
 
 cv2.namedWindow("Video Capture", cv2.WINDOW_AUTOSIZE)
@@ -46,8 +48,9 @@ if not cam.isOpened():
 while True:
     ret, frame = cam.read()
     if frame.shape[0] > 0:
-        frame = green_filter(frame)
+        binary_img = green_filter(frame)
         cv2.imshow("Video Capture", frame)
+        cv2.imshow("Binary Image", binary_img)
 
     # break on key press
     key = cv2.waitKey(10)
