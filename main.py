@@ -1,12 +1,14 @@
 import cv2
-from numpy import tan
+import numpy as np
 import sys
+
+import Camera
 
 GOAL_HEIGHT = 105
 
 # Camera params
 CAMERA_HEIGHT = 24
-CAMERA_ANGLE = 45
+CAMERA_ANGLE = 40
 
 # distance between camera and goal
 HEIGHT = GOAL_HEIGHT - CAMERA_HEIGHT
@@ -22,37 +24,36 @@ def calc_dist(pix_y: int) -> float:
     """
     Calculate how far a specific pixel is from the camera
     """
-
     angle = (pix_y / VERTICAL_RESOLUTION) * VERTICAL_FOV - (VERTICAL_FOV / 2)
 
-    return HEIGHT / tan(angle)
+    return HEIGHT / np.tan(angle)
 
 
-def green_filter(img):
-    filtered_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    filtered_img = cv2.GaussianBlur(filtered_img, (5, 5), 0)
-    filtered_img = cv2.inRange(filtered_img, (60, 25, 100), (90, 255, 255), filtered_img)
-    return filtered_img
+camera = Camera.Camera()
 
-
-
-
-cv2.namedWindow("Video Capture", cv2.WINDOW_AUTOSIZE)
-
-cam = cv2.VideoCapture(0)  # 0 is the default camera
-
-if not cam.isOpened():
-    print("unable to open default camera")
-    sys.exit(1)
+camera.__int__()
 
 while True:
-    ret, frame = cam.read()
-    if frame.shape[0] > 0:
-        binary_img = green_filter(frame)
-        cv2.imshow("Video Capture", frame)
-        cv2.imshow("Binary Image", binary_img)
+    frame, binary_img = camera.update()
+
+    contours, hierarchy = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(frame, contours, -1, (0, 0, 255))
+
+
+    for contour in contours:
+        if cv2.contourArea(contour) < 15:
+            continue
+
+        rect = cv2.minAreaRect(contour)
+        center, size, angle = rect
+        center = tuple([int(dim) for dim in center])
+
+        cv2.circle(frame, center, 3, (0, 0, 255), -1)
+
+
+    cv2.imshow("Video Capture", frame)
 
     # break on key press
     key = cv2.waitKey(10)
-    if key > 0 and key != 255:
+    if key > 0 and key == 255:
         break
