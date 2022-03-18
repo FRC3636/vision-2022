@@ -39,7 +39,6 @@ while True:
     contours, hierarchy = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     cv2.drawContours(frame, contours, -1, (0, 0, 255))
 
-
     for contour in contours:
         if cv2.contourArea(contour) < 15:
             continue
@@ -49,7 +48,6 @@ while True:
         center = tuple([int(dim) for dim in center])
 
         cv2.circle(frame, center, 3, (0, 0, 255), -1)
-
 
     cv2.imshow("Video Capture", frame)
 

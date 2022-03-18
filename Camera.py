@@ -21,6 +21,8 @@ class Camera:
 
         self.__cam = cv2.VideoCapture(0)  # 0 is the default camera
 
+        self.__cam.set(15, 1)
+
         if not self.__cam.isOpened():
             print("unable to open default camera")
             sys.exit(1)
