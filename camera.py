@@ -86,7 +86,7 @@ class Camera:
 
     def calc_dist(self, pix_y: int) -> float:
         """
-        Calculate how far a target it from the camera
+        Calculatfix e how far a target it from the camera
         """
         angle = (pix_y / self.__vertical_resolution) * self.__vertical_fov - (self.__vertical_fov / 2)
 
@@ -103,11 +103,13 @@ class Camera:
             binary_img = green_filter(frame)
             cv2.imshow("Binary Image", binary_img)
 
+            cv2.imshow("Video Capture", frame)
+
             # Get each individual shape
             contours, hierarchy = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             cv2.drawContours(frame, contours, -1, (0, 0, 255))
 
-            best_contour = contours[0]
+            # best_contour = contours[0]
 
             for contour in contours:
                 if cv2.contourArea(contour) < 15:
