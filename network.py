@@ -27,6 +27,5 @@ class Network:
         self.__nt = NetworkTables.getTable('Camera')
 
     def update(self, distance, angle):
-
         self.__nt.putNumber('Distance', distance)
         self.__nt.putNumber('Angle', angle)
