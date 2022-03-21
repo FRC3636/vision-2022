@@ -1,10 +1,11 @@
 import sys
 
 import cv2
+import numpy
 import numpy as np
 
-range_lower = [60, 25, 100]
-range_upper = [90, 255, 255]
+range_lower = [41, 63, 208]
+range_upper = [58, 132, 255]
 
 
 def hl(value):
@@ -76,8 +77,8 @@ class Camera:
 
         ret, frame = self.__cam.read()
 
-        self.__horizontal_resolution = frame.shape[0]
-        self.__vertical_resolution = frame.shape[1]
+        self.__horizontal_resolution = frame.shape[1]
+        self.__vertical_resolution = frame.shape[0]
 
         # Used for tuning HSV threshold
         cv2.createTrackbar("H Lower", "Video Capture", 0, 180, hl)
@@ -91,12 +92,14 @@ class Camera:
         """
         Calculatfix e how far a target it from the camera
         """
-        angle = (pix_y / self.__vertical_resolution) * self.__vertical_fov - (self.__vertical_fov / 2)
+        angle = (self.__vertical_fov / 2) - ((pix_y / self.__vertical_resolution) * self.__vertical_fov)
 
-        return self.__relative_height / np.tan(angle)
+        angle = angle + self.__camera_angle
+
+        return self.__relative_height / np.tan(np.deg2rad(angle))
 
     def calc_angle(self, pix_x: int) -> float:
-        angle = (pix_x / self.__horizontal_resolution) * self.__horizontal_fov - (self.__horizontal_fov / 2)
+        angle = ((pix_x / self.__horizontal_resolution) * self.__horizontal_fov) - (self.__horizontal_fov / 2)
 
         return angle
 
@@ -106,13 +109,14 @@ class Camera:
             binary_img = green_filter(frame)
             cv2.imshow("Binary Image", binary_img)
 
-            cv2.imshow("Video Capture", frame)
-
             # Get each individual shape
             contours, hierarchy = cv2.findContours(binary_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             cv2.drawContours(frame, contours, -1, (0, 0, 255))
 
-            # best_contour = contours[0]
+            cv2.imshow("Video Capture", frame)
+
+            best_contour = numpy.array([[0, self.__vertical_resolution]])
+            best_center, best_size, best_angle = cv2.minAreaRect(best_contour)
 
             for contour in contours:
                 if cv2.contourArea(contour) < 15:
@@ -122,6 +126,18 @@ class Camera:
                 center, size, angle = rect
                 center = tuple([int(dim) for dim in center])
 
+                # comparison for which is better contour
+                if best_center[1] > center[1]:
+                    best_contour = contour
+                    best_center, best_size, best_angle = center, size, angle
+
                 cv2.circle(frame, center, 3, (0, 0, 255), -1)
 
-            return frame
+            if best_center[0] == 0 and best_center[1] == self.__vertical_resolution:
+                dist = 0
+                angle = 0
+            else:
+                dist = self.calc_dist(best_center[1])
+                angle = self.calc_angle(best_center[0])
+
+            return frame, dist, angle
