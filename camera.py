@@ -55,6 +55,21 @@ class Camera:
     # distance between camera and goal
     __relative_height = 0
 
+    def calc_dist(self, pix_y: int) -> float:
+        """
+        Calculatfix e how far a target it from the camera
+        """
+        angle = (self.__vertical_fov / 2) - ((pix_y / self.__vertical_resolution) * self.__vertical_fov)
+
+        angle = angle + self.__camera_angle
+
+        return self.__relative_height / np.tan(np.deg2rad(angle))
+
+    def calc_angle(self, pix_x: int) -> float:
+        angle = ((pix_x / self.__horizontal_resolution) * self.__horizontal_fov) - (self.__horizontal_fov / 2)
+
+        return angle
+
     def __int__(self, horizontal_fov, vertical_fov, camera_height, camera_angle, exposure):
 
         self.__horizontal_fov = horizontal_fov
@@ -74,6 +89,9 @@ class Camera:
 
         self.__cam.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
         self.__cam.set(cv2.CAP_PROP_EXPOSURE, exposure)
+        self.__cam.set(cv2.CAP_PROP_FOURCC, 0x47504A4D);
+        self.__cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1640)
+        self.__cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1232)
 
         ret, frame = self.__cam.read()
 
@@ -87,21 +105,6 @@ class Camera:
         cv2.createTrackbar("H Upper", "Video Capture", 0, 180, hh)
         cv2.createTrackbar("S Upper", "Video Capture", 0, 255, sh)
         cv2.createTrackbar("V Upper", "Video Capture", 0, 255, vh)
-
-    def calc_dist(self, pix_y: int) -> float:
-        """
-        Calculatfix e how far a target it from the camera
-        """
-        angle = (self.__vertical_fov / 2) - ((pix_y / self.__vertical_resolution) * self.__vertical_fov)
-
-        angle = angle + self.__camera_angle
-
-        return self.__relative_height / np.tan(np.deg2rad(angle))
-
-    def calc_angle(self, pix_x: int) -> float:
-        angle = ((pix_x / self.__horizontal_resolution) * self.__horizontal_fov) - (self.__horizontal_fov / 2)
-
-        return angle
 
     def update(self):
         ret, frame = self.__cam.read()
