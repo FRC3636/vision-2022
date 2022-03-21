@@ -54,7 +54,7 @@ class Camera:
     # distance between camera and goal
     __relative_height = 0
 
-    def __int__(self, horizontal_fov, vertical_fov, camera_height, camera_angle):
+    def __int__(self, horizontal_fov, vertical_fov, camera_height, camera_angle, exposure):
 
         self.__horizontal_fov = horizontal_fov
         self.__vertical_fov = vertical_fov
@@ -70,6 +70,9 @@ class Camera:
         if not self.__cam.isOpened():
             print("unable to open default camera")
             sys.exit(1)
+
+        self.__cam.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+        self.__cam.set(cv2.CAP_PROP_EXPOSURE, exposure)
 
         ret, frame = self.__cam.read()
 
