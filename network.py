@@ -27,5 +27,7 @@ class Network:
         self.__nt = NetworkTables.getTable('Camera')
 
     def update(self, distance, angle):
+        if not NetworkTables.isConnected():
+            print("Disconnected")
         self.__nt.putNumber('Distance', distance)
         self.__nt.putNumber('Angle', angle)

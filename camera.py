@@ -8,28 +8,8 @@ range_lower = [41, 63, 208]
 range_upper = [58, 132, 255]
 
 
-def hl(value):
-    range_lower[0] = value
-
-
-def sl(value):
-    range_lower[1] = value
-
-
-def vl(value):
-    range_lower[2] = value
-
-
-def hh(value):
-    range_upper[0] = value
-
-
-def sh(value):
-    range_upper[1] = value
-
-
-def vh(value):
-    range_upper[2] = value
+def change_range(range, index, value):
+    range[index] = value
 
 
 def green_filter(img):
@@ -89,9 +69,6 @@ class Camera:
 
         self.__cam.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
         self.__cam.set(cv2.CAP_PROP_EXPOSURE, exposure)
-        self.__cam.set(cv2.CAP_PROP_FOURCC, 0x47504A4D);
-        self.__cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1640)
-        self.__cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1232)
 
         ret, frame = self.__cam.read()
 
@@ -99,12 +76,12 @@ class Camera:
         self.__vertical_resolution = frame.shape[0]
 
         # Used for tuning HSV threshold
-        cv2.createTrackbar("H Lower", "Video Capture", 0, 180, hl)
-        cv2.createTrackbar("S Lower", "Video Capture", 0, 255, sl)
-        cv2.createTrackbar("V Lower", "Video Capture", 0, 255, vl)
-        cv2.createTrackbar("H Upper", "Video Capture", 0, 180, hh)
-        cv2.createTrackbar("S Upper", "Video Capture", 0, 255, sh)
-        cv2.createTrackbar("V Upper", "Video Capture", 0, 255, vh)
+        cv2.createTrackbar("H Lower", "Video Capture", 0, 180, lambda value: change_range(range_lower, 0, value))
+        cv2.createTrackbar("S Lower", "Video Capture", 0, 255, lambda value: change_range(range_lower, 1, value))
+        cv2.createTrackbar("V Lower", "Video Capture", 0, 255, lambda value: change_range(range_lower, 2, value))
+        cv2.createTrackbar("H Upper", "Video Capture", 0, 180, lambda value: change_range(range_upper, 0, value))
+        cv2.createTrackbar("S Upper", "Video Capture", 0, 255, lambda value: change_range(range_upper, 1, value))
+        cv2.createTrackbar("V Upper", "Video Capture", 0, 255, lambda value: change_range(range_upper, 2, value))
 
     def update(self):
         ret, frame = self.__cam.read()
